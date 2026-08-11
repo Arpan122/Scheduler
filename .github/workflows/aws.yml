@@ -16,7 +16,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           cache: 'npm'
 
       - name: Build and Deploy
@@ -25,20 +25,24 @@ jobs:
           HOSTNAME: ${{ secrets.HOST_DNS }}
           USERNAME: ${{ secrets.USERNAME }}
         run: |
-          echo "$PRIVATE_KEY" > private_key && chmod 600 private_key
           ssh -o StrictHostKeyChecking=no -i private_key ${USERNAME}@${HOSTNAME} '
             echo "Connected to EC2 Server"
 
             cd /home/ubuntu/Scheduler &&
-            git pull origin main &&
-            sudo npm ci &&
-            sudo npm run build &&
-            
-            sudo cp -r frontend/dist/* /var/www/html/ &&
+            git pull origin main
 
+            echo "Installing Dependencies"
+            sudo npm ci
+
+            echo "Building application"
+            sudo npm run build
+
+            echo "Restarting Bakcend Server"
             pm2 restart backend-server
             pm2 save
 
+            echo "Restarting Frontend Server"
+            sudo cp -r frontend/dist/* /var/www/html/
             sudo nginx -t &&
             sudo systemctl reload nginx
           '
