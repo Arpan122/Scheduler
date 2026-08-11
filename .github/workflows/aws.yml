@@ -1,0 +1,44 @@
+name: Deploy to EC2
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Build and Deploy
+        env:
+          PRIVATE_KEY: ${{ secrets.EC2_SSH_KEY }}
+          HOSTNAME: ${{ secrets.HOST_DNS }}
+          USERNAME: ${{ secrets.USERNAME }}
+        run: |
+          echo "$PRIVATE_KEY" > private_key && chmod 600 private_key
+          ssh -o StrictHostKeyChecking=no -i private_key ${USERNAME}@${HOSTNAME} '
+            echo "Connected to EC2 Server"
+
+            cd /home/ubuntu/Scheduler &&
+            git pull origin main &&
+            sudo npm ci &&
+            sudo npm run build &&
+            
+            sudo cp -r frontend/dist/* /var/www/html/ &&
+
+            pm2 restart backend-server
+            pm2 save
+
+            sudo nginx -t &&
+            sudo systemctl reload nginx
+          '
