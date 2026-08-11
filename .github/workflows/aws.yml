@@ -24,7 +24,7 @@ jobs:
           SSH_PRIVATE_KEY: ${{ secrets.EC2_SSH_KEY }}
           SOURCE: "./"
           REMOTE_HOST: ${{ secrets.HOST_DNS }}
-          REMOTE_USER: $${{ secrets.HOST_DNS }}
+          REMOTE_USER: ${{ secrets.HOST_DNS }}
 
       - name: Executing SSH commands for Build
         uses: appleboy/ssh-action@master
