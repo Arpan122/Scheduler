@@ -36,7 +36,6 @@ jobs:
             cd /home/ubuntu/Scheduler
             git pull origin main
 
-            echo "Installing Dependencies"
             sudo npm i
 
             echo "Building application"
