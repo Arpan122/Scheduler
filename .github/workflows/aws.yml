@@ -4,49 +4,65 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
 
 jobs:
   deploy:
+    name: Build & Deploy to EC2
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 24
+          node-version: 20
           cache: 'npm'
 
       - name: Load SSH Key
         uses: webfactory/ssh-agent@v0.10.0
         with:
-          ssh-private-key: ${{secrets.EC2_SSH_KEY}}
+          ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
 
-      - name: Build and Deploy
+      - name: Build and Deploy via SSH
         env:
           HOSTNAME: ${{ secrets.HOST_DNS }}
           USERNAME: ${{ secrets.USERNAME }}
         run: |
           ssh -o StrictHostKeyChecking=no ${USERNAME}@${HOSTNAME} '
-            echo "Connected to EC2 Server"
+            set -e
 
-            cd /home/ubuntu/Scheduler &&
-            git pull origin main
+            echo "==> Navigating to application directory..."
+            cd /home/ubuntu/Scheduler
 
-            echo "Installing Dependencies"
+            echo "==> Fetching latest code..."
+            git fetch origin main
+            git reset --hard origin/main
+
+            echo "==> Installing dependencies..."
             sudo npm ci
 
-            echo "Building application"
+            echo "==> Building application..."
             sudo npm run build
 
-            echo "Restarting Bakcend Server"
-            pm2 restart backend-server
+            echo "==> Ensuring PM2 is installed..."
+            if ! command -v pm2 &> /dev/null; then
+              sudo npm install -g pm2
+            fi
+
+            echo "==> Managing Node backend process..."
+            pm2 restart schedule-backend || pm2 start backend/dist/index.js --name "schedule-backend"
             pm2 save
 
-            echo "Restarting Frontend Server"
+            echo "==> Syncing static frontend build to Nginx..."
+            sudo mkdir -p /var/www/html
             sudo cp -r frontend/dist/* /var/www/html/
-            sudo nginx -t &&
+
+            echo "==> Testing and reloading Nginx..."
+            sudo nginx -t
             sudo systemctl reload nginx
+
+            echo "==> Deployment successfully completed!"
           '
