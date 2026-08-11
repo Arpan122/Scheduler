@@ -19,13 +19,17 @@ jobs:
           node-version: 24
           cache: 'npm'
 
+      - name: Load SSH Key
+        uses: webfactory/ssh-agent@0.10.0
+        with:
+          ssh-private-key: $${{secrets.EC2_SSH_KEY}}
+
       - name: Build and Deploy
         env:
-          PRIVATE_KEY: ${{ secrets.EC2_SSH_KEY }}
           HOSTNAME: ${{ secrets.HOST_DNS }}
           USERNAME: ${{ secrets.USERNAME }}
         run: |
-          ssh -o StrictHostKeyChecking=no -i ${PRIVATE_KEY} ${USERNAME}@${HOSTNAME} '
+          ssh -o StrictHostKeyChecking=no -i ${USERNAME}@${HOSTNAME} '
             echo "Connected to EC2 Server"
 
             cd /home/ubuntu/Scheduler &&
