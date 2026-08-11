@@ -25,7 +25,7 @@ jobs:
           HOSTNAME: ${{ secrets.HOST_DNS }}
           USERNAME: ${{ secrets.USERNAME }}
         run: |
-          ssh -o StrictHostKeyChecking=no -i private_key ${USERNAME}@${HOSTNAME} '
+          ssh -o StrictHostKeyChecking=no -i ${PRIVATE_KEY} ${USERNAME}@${HOSTNAME} '
             echo "Connected to EC2 Server"
 
             cd /home/ubuntu/Scheduler &&
