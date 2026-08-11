@@ -1,5 +1,9 @@
 {
   "name": "schedule-to-calendar",
+  "workspaces":[
+    "frontend",
+    "backend"
+  ],
   "private": true,
   "scripts": {
     "dev": "concurrently \"npm run dev --prefix frontend\" \"npm run dev --prefix backend\"",

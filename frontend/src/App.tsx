@@ -1,4 +1,5 @@
 import { FiCalendar } from "react-icons/fi";
+import { ServerHealth } from "./components/ServerHealth";
 
 function App() {
   return (
@@ -6,11 +7,11 @@ function App() {
       <nav className="navbar">
         <h1 className="navbar-title">
           <FiCalendar className="navbar-title-icon" aria-hidden="true" />
-          Scheduler
+          Schedule to Calendar
         </h1>
         <span className="navbar-divider" aria-hidden="true" />
         <div className="navbar-links">
-          <button type="button" className="navbar-btn">
+          <button type="button" className="navbar-btn active">
             Home
           </button>
           <button type="button" className="navbar-btn">
@@ -19,12 +20,20 @@ function App() {
         </div>
       </nav>
       <main className="main-content">
-        <h1 className="page-title">
-          Hello World
-        </h1>
+        <div className="hero-section">
+          <h1 className="page-title">
+            Schedule to Calendar AI
+          </h1>
+          <p className="page-subtitle">
+            Upload your course or work schedules and instantly sync events directly to your Google Calendar.
+          </p>
+        </div>
+        
+        <ServerHealth />
       </main>
     </>
   );
 }
 
 export default App;
+
