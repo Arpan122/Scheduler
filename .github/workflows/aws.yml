@@ -7,8 +7,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  deploy:
-    name: Build & Deploy to EC2
+  build:
+    name: Build Artifacts
     runs-on: ubuntu-latest
 
     steps:
@@ -21,48 +21,81 @@ jobs:
           node-version: 20
           cache: 'npm'
 
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build frontend and backend
+        run: npm run build
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-assets
+          path: |
+            frontend/dist
+            backend/dist
+            backend/package.json
+            package.json
+            package-lock.json
+
+  deploy:
+    name: Deploy to EC2
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-assets
+
       - name: Load SSH Key
         uses: webfactory/ssh-agent@v0.10.0
         with:
           ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
 
-      - name: Build and Deploy via SSH
+      - name: Deploy to EC2 via SSH
         env:
           HOSTNAME: ${{ secrets.HOST_DNS }}
           USERNAME: ${{ secrets.USERNAME }}
         run: |
+          # Create temporary archive of built dist & configs
+          tar -czf release.tgz frontend/dist backend/dist package.json package-lock.json backend/package.json
+
+          # Copy compressed release archive to EC2
+          scp -o StrictHostKeyChecking=no release.tgz ${USERNAME}@${HOSTNAME}:/tmp/release.tgz
+
+          # Extract and apply release on EC2
           ssh -o StrictHostKeyChecking=no ${USERNAME}@${HOSTNAME} '
             set -e
 
-            echo "==> Navigating to application directory..."
+            echo "==> Deploying release bundle..."
+            mkdir -p /home/ubuntu/Scheduler
             cd /home/ubuntu/Scheduler
 
-            echo "==> Fetching latest code..."
-            git fetch origin main
-            git reset --hard origin/main
+            # Unpack release
+            tar -xzf /tmp/release.tgz -C .
+            rm -f /tmp/release.tgz
 
-            echo "==> Installing dependencies..."
-            sudo npm ci
+            # Install production dependencies for backend if needed
+            npm install --production
 
-            echo "==> Building application..."
-            sudo npm run build
-
-            echo "==> Ensuring PM2 is installed..."
+            # Ensure PM2 is installed
             if ! command -v pm2 &> /dev/null; then
               sudo npm install -g pm2
             fi
 
-            echo "==> Managing Node backend process..."
-            pm2 restart schedule-backend || pm2 start backend/dist/index.js --name "schedule-backend"
+            # Restart backend Express server
+            pm2 restart schedule-backend || pm2 start backend/dist/index.js --name "schedule-backend" --cwd /home/ubuntu/Scheduler/backend
             pm2 save
 
-            echo "==> Syncing static frontend build to Nginx..."
+            # Sync static frontend to Nginx
             sudo mkdir -p /var/www/html
             sudo cp -r frontend/dist/* /var/www/html/
 
-            echo "==> Testing and reloading Nginx..."
+            # Reload Nginx
             sudo nginx -t
             sudo systemctl reload nginx
 
-            echo "==> Deployment successfully completed!"
+            echo "==> Fast deployment complete!"
           '
