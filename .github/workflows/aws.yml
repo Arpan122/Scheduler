@@ -10,39 +10,44 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - name: Update Node
+        uses: actions/setup-node@v4
         with:
           node-version: 24
 
-      - name: Set SSH Key
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.EC2_SSH_KEY}}" > ~/.ssh/id_rsa && chmod 600 ~/.ssh/id_rsa
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-
-      - name: Build and Deploy with SSH
+      - name: Deploy to EC2 instance
+        uses: easingthemes/ssh-deploy@v2.1.5
         env:
-          HOSTNAME: ${{ secrets.HOST_DNS }}
-          USERNAME: ${{ secrets.USERNAME }}
-        run: |
-          ssh -o StrictHostKeyChecking=no ~/.ssh/id_rsa ${USERNAME}@${HOSTNAME} "
+          SSH_PRIVATE_KEY: ${{ secrets.EC2_SSH_KEY }}
+          SOURCE: "./"
+          REMOTE_HOST: ${{ secrets.HOST_DNS }}
+          REMOTE_USER: $${{ secrets.HOST_DNS }}
 
-          cd /home/ubuntu/Scheduler &&
-          git pull origin main &&
+      - name: Executing SSH commands for Build
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOST_DNS }}
+          username: ${{ secrets.HOST_DNS }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            cd /home/ubuntu/Scheduler
+            git pull origin main
 
-          echo "Installing Dependencies" &&
-          sudo npm i &&
+            echo "Installing Dependencies"
+            sudo npm i
 
-          echo "Building application" &&
-          sudo npm run build &&
+            echo "Building application"
+            sudo npm run build
 
-          echo "Restarting Backend Server" &&
-          pm2 restart backend-server &&
-          pm2 save &&
+            echo "Restarting Backend Server"
+            pm2 restart backend-server
+            pm2 save
 
-          echo "Restarting Frontend Server" &&
-          sudo cp -r frontend/dist/* /var/www/html/ &&
-          sudo nginx -t && &&
-          sudo systemctl reload nginx
-          "
+            echo "Restarting Frontend Server"
+            sudo cp -r frontend/dist/* /var/www/html/
+            sudo nginx -t &&
+            sudo systemctl reload nginx
+            
