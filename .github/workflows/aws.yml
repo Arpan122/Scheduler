@@ -20,7 +20,7 @@ jobs:
           cache: 'npm'
 
       - name: Load SSH Key
-        uses: webfactory/ssh-agent@0.10.0
+        uses: webfactory/ssh-agent@v0.10.0
         with:
           ssh-private-key: $${{secrets.EC2_SSH_KEY}}
 
