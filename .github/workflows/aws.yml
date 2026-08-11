@@ -12,6 +12,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          node-version: 24
 
       - name: Set SSH Key
         run: |
@@ -24,22 +26,23 @@ jobs:
           HOSTNAME: ${{ secrets.HOST_DNS }}
           USERNAME: ${{ secrets.USERNAME }}
         run: |
-          ssh -o StrictHostKeyChecking=no ~/.ssh/id_rsa ${USERNAME}@${HOSTNAME}
+          ssh -o StrictHostKeyChecking=no ~/.ssh/id_rsa ${USERNAME}@${HOSTNAME} "
 
-          cd /home/ubuntu/Scheduler
-          git pull origin main
+          cd /home/ubuntu/Scheduler &&
+          git pull origin main &&
 
-          echo "Installing Dependencies"
-          sudo npm i
+          echo "Installing Dependencies" &&
+          sudo npm i &&
 
-          echo "Building application"
-          sudo npm run build
+          echo "Building application" &&
+          sudo npm run build &&
 
-          echo "Restarting Backend Server"
-          pm2 restart backend-server
-          pm2 save
+          echo "Restarting Backend Server" &&
+          pm2 restart backend-server &&
+          pm2 save &&
 
-          echo "Restarting Frontend Server"
-          sudo cp -r frontend/dist/* /var/www/html/
-          sudo nginx -t &&
+          echo "Restarting Frontend Server" &&
+          sudo cp -r frontend/dist/* /var/www/html/ &&
+          sudo nginx -t && &&
           sudo systemctl reload nginx
+          "
