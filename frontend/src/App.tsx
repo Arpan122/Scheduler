@@ -15,7 +15,7 @@ function App() {
             Home
           </button>
           <button type="button" className="navbar-btn">
-            Import
+            Testing
           </button>
         </div>
       </nav>

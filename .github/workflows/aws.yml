@@ -22,14 +22,14 @@ jobs:
             git pull origin main
 
             echo "Installing Dependencies"
-            npm ci
+            sudo npm ci
 
             echo "Building application"
-            npm run build
+            sudo npm run build
 
             echo "Restarting Backend Server"
-            pm2 restart backend-server
-            pm2 save
+            sudo pm2 restart backend-server
+            sudo pm2 save
 
             echo "Restarting Frontend Server"
             sudo cp -r frontend/dist/* /var/www/html/
