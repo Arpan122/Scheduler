@@ -15,7 +15,7 @@ function App() {
             Home
           </button>
           <button type="button" className="navbar-btn">
-            Testing
+            If you see this, CICD workign properly
           </button>
         </div>
       </nav>
