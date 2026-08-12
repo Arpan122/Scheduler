@@ -23,14 +23,14 @@ jobs:
             git reset --hard origin/main
 
             echo "Installing Dependencies"
-            sudo npm ci
+            sudo npm i
 
             echo "Building application"
             sudo npm run build
 
             echo "Restarting Backend Server"
-            sudo pm2 restart backend-server
-            sudo pm2 save
+            pm2 restart backend-server
+            pm2 save
 
             echo "Restarting Frontend Server"
             sudo cp -r frontend/dist/* /var/www/html/
