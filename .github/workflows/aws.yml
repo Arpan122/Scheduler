@@ -7,43 +7,31 @@ on:
 
 jobs:
   deploy:
-    runs-on: [self-hosted, linux, x64]
+    runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-
-      - name: Install Node.js
-        uses: actions/setup-node@v7
+      - name: Deploy to EC2 via SSH
+        uses: appleboy/ssh-action@v1.2.0
         with:
-          node-version: '24'
-
-      - name: Install npm dependencies
-        run: npm install
-
-      - name: Executing remote ssh commands using ssh key
-        uses: appleboy/ssh-action@master
-        with:
+          host: ${{ secrets.HOST_DNS }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            echo ${{ secrets.EC2_SSH_KEY }} > key.pem && chmod 400 "key.pem"
-            ssh -i "key.pem" ${{ secrets.USERNAME }}@${{ secrets.HOST_DNS }}
-
             echo "Connected to EC2 Server"
-
-            cd /home/ubuntu/Scheduler &&
+            cd /home/ubuntu/Scheduler
             git pull origin main
 
             echo "Installing Dependencies"
-            sudo npm ci
+            npm ci
 
             echo "Building application"
-            sudo npm run build
+            npm run build
 
-            echo "Restarting Bakcend Server"
+            echo "Restarting Backend Server"
             pm2 restart backend-server
             pm2 save
 
             echo "Restarting Frontend Server"
             sudo cp -r frontend/dist/* /var/www/html/
-            sudo nginx -t &&
+            sudo nginx -t
             sudo systemctl reload nginx
