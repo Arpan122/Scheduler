@@ -7,35 +7,27 @@ on:
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64]
 
     steps:
-      - name: Checkout the code
-        uses: actions/checkout@v1
+      - name: Checkout
+        uses: actions/checkout@v6
 
       - name: Install Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
-          node-version: 24
+          node-version: '24'
 
       - name: Install npm dependencies
         run: npm install
 
-      - name: Deploy to my EC2 instance
-        uses: easingthemes/ssh-deploy@v2.1.5
-        env:
-          SSH_PRIVATE_KEY: ${{ secrets.EC2_SSH_KEY }}
-          SOURCE: "./"
-          REMOTE_HOST: ${{ secrets.HOST_DNS }}
-          REMOTE_USER: ${{ secrets.USERNAME }}
-
       - name: Executing remote ssh commands using ssh key
         uses: appleboy/ssh-action@master
         with:
-          host: ${{ secrets.HOST_DNS }}
-          username: ${{ secrets.USERNAME }}
-          key: ${{ secrets.EC2_SSH_KEY }}
           script: |
+            echo ${{ secrets.EC2_SSH_KEY }} > key.pem && chmod 400 "key.pem"
+            ssh -i "key.pem" ${{ secrets.USERNAME }}@${{ secrets.HOST_DNS }}
+
             echo "Connected to EC2 Server"
 
             cd /home/ubuntu/Scheduler &&
