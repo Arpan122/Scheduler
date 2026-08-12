@@ -19,7 +19,8 @@ jobs:
           script: |
             echo "Connected to EC2 Server"
             cd /home/ubuntu/Scheduler
-            git pull origin main
+            git fetch origin
+            git reset --hard origin/main
 
             echo "Installing Dependencies"
             sudo npm ci
