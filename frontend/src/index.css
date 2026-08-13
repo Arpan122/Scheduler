@@ -32,6 +32,11 @@ body {
   border-bottom: 1px solid var(--border);
 }
 
+.navbar-title-link {
+  text-decoration: none;
+  color: inherit;
+}
+
 .navbar-title {
   display: flex;
   align-items: center;
@@ -43,42 +48,40 @@ body {
   color: var(--text);
 }
 
-.navbar-title-icon {
-  width: 1.75rem;
-  height: 1.75rem;
-  flex-shrink: 0;
-  color: var(--text-muted);
-}
-
-.navbar-divider {
-  width: 1px;
-  height: 28px;
-  background-color: var(--border);
-}
-
-.navbar-links {
+.navbar-right {
+  margin-left: auto;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
 }
 
-.navbar-btn {
-  padding: 0.5rem 1rem;
+.navbar-login-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.875rem;
   font-size: 0.9375rem;
   font-weight: 500;
   font-family: inherit;
-  color: var(--text-muted);
-  background: transparent;
+  color: var(--text);
+  background-color: transparent;
   border: none;
   border-radius: 6px;
   cursor: pointer;
-  transition: color 0.15s, background-color 0.15s;
+  transition: background-color 0.15s ease, color 0.15s ease, transform 0.1s ease;
 }
 
-.navbar-btn:hover,
-.navbar-btn.active {
-  color: var(--text);
+.navbar-login-btn:hover {
   background-color: var(--surface);
+  color: #ffffff;
+}
+
+.navbar-login-btn:active {
+  transform: scale(0.98);
+}
+
+.navbar-btn-icon {
+  font-size: 1.125rem;
+  color: var(--text-muted);
 }
 
 .main-content {

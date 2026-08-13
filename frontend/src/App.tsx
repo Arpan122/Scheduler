@@ -1,38 +1,21 @@
-import { FiCalendar } from "react-icons/fi";
-import { ServerHealth } from "./components/ServerHealth";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { Navbar } from "./components/Navbar";
+import { Home } from "./pages/Home";
+import { Admin } from "./pages/Admin";
+
 
 function App() {
-  return (
-    <>
-      <nav className="navbar">
-        <h1 className="navbar-title">
-          <FiCalendar className="navbar-title-icon" aria-hidden="true" />
-          Schedule to Calendar
-        </h1>
-        <span className="navbar-divider" aria-hidden="true" />
-        <div className="navbar-links">
-          <button type="button" className="navbar-btn active">
-            Home
-          </button>
-          <button type="button" className="navbar-btn">
-            If you see this, CICD workign properly
-          </button>
-        </div>
-      </nav>
-      <main className="main-content">
-        <div className="hero-section">
-          <h1 className="page-title">
-            Schedule to Calendar AI
-          </h1>
-          <p className="page-subtitle">
-            Upload your course or work schedules and instantly sync events directly to your Google Calendar.
-          </p>
-        </div>
-        
-        <ServerHealth />
-      </main>
-    </>
-  );
+    return (
+        <BrowserRouter>
+            <Navbar />
+            <main className="main-content">
+                <Routes>
+                    <Route path="/" element={<Home />} />
+                    <Route path="/admin" element={<Admin />} />
+                </Routes>
+            </main>
+        </BrowserRouter>
+    );
 }
 
 export default App;

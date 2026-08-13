@@ -10,11 +10,14 @@
   },
   "dependencies": {
     "cors": "^2.8.5",
-    "express": "^4.21.2"
+    "express": "^4.21.2",
+    "express-session": "^1.19.0",
+    "openid-client": "^6.8.5"
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
+    "@types/express-session": "^1.19.0",
     "@types/node": "^22.13.10",
     "tsx": "^4.19.3",
     "typescript": "^5.7.3"
