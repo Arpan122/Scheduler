@@ -68,7 +68,7 @@ app.get("/api/login", async (req, res) => {
             grant_type: 'authorization_code',
             client_id: cid,
             code: codeParam,
-            redirect_uri: 'http://localhost:8000/api/login'
+            redirect_uri: `http://${process.env.VITE_SERVER_URL}:8000/api/login`
         });
 
         const response = await axios.post(

@@ -12,7 +12,7 @@ export function Navbar() {
     }
 
     useEffect(() => {
-        axios.get("http://localhost:8000/api/validate", {withCredentials: true}).then(
+        axios.get(`http://${import.meta.env.VITE_SERVER_URL}:8000/api/validate`, {withCredentials: true}).then(
             (res) => (res.data.authenticated===true ? setUser(res.data.user) : setUser(null))
         ).catch(
             () => setUser(null)
@@ -21,7 +21,7 @@ export function Navbar() {
 
     async function handleLogout() {
         try {
-            window.location.href = "http://localhost:8000/api/logout";
+            window.location.href = `http://${import.meta.env.VITE_SERVER_URL}:8000/api/logout`;
             setUser(null);
         } catch (err) {
             console.error('Logout failed:', err);
