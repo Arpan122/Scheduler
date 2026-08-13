@@ -61,10 +61,13 @@ app.get("/api/login", async (req, res) => {
             `${process.env.COGNITO_CLIENT_ID}:${process.env.COGNITO_CLIENT_SECRET}`
         ).toString('base64');
 
+        const cid :string = process.env.COGNITO_CLIENT_ID ? process.env.COGNITO_CLIENT_ID  : "";
+        const codeParam = typeof code === 'string' ? code : String(code || '');
+
         const params = new URLSearchParams({
             grant_type: 'authorization_code',
-            client_id: process.env.COGNITO_CLIENT_ID,
-            code,
+            client_id: cid,
+            code: codeParam,
             redirect_uri: 'http://localhost:8000/api/login'
         });
 

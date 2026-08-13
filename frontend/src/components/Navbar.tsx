@@ -1,4 +1,4 @@
-import { Link, redirect } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { FiLogIn, FiLogOut } from "react-icons/fi";
 import {  useEffect, useState } from "react";
 

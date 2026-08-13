@@ -3,10 +3,13 @@ import * as dotenv from "dotenv";
 
 dotenv.config({path: '../.env'})
 
+const uipd : string = process.env.COGNITO_USER_POOL_ID ? process.env.COGNITO_USER_POOL_ID : "";
+const cid : string = process.env.COGNITO_CLIENT_ID ? process.env.COGNITO_CLIENT_ID : "";
+
 const verifier = CognitoJwtVerifier.create({
-    userPoolId: process.env.COGNITO_USER_POOL_ID,
+    userPoolId: uipd,
     tokenUse: "access",
-    clientId: process.env.COGNITO_CLIENT_ID
+    clientId: cid
 });
 
 export async function authToken(req: any, res: any, next: any) {
