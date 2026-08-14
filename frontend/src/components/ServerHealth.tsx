@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import axios from "axios";
 import {
     FiActivity,
     FiCpu,
@@ -47,19 +48,27 @@ export function ServerHealth() {
         setLoading(true);
         const start = performance.now();
         try {
-            const res = await fetch("/api/health");
+            const serverUrl = import.meta.env.VITE_SERVER_URL || "localhost:8000";
+            const res = await axios.get<HealthMetrics>(
+                `http://${serverUrl}/api/health`,
+                { withCredentials: true }
+            );
             
             const end = performance.now();
-            if (!res.ok) {
-                throw new Error(`HTTP error ${res.status}`);
-            }
-            const data: HealthMetrics = await res.json();
-            setMetrics(data);
+            setMetrics(res.data);
             setError(null);
             setLatency(Math.round(end - start));
             setLastUpdated(new Date());
         } catch (err: unknown) {
-            setError(err instanceof Error ? err.message : "Failed to connect to backend server");
+            if (axios.isAxiosError(err)) {
+                if (err.response?.status === 401 || err.response?.status === 403) {
+                    setError("Unauthorized: Please log in with admin privileges to view server health.");
+                } else {
+                    setError(`Server Error (${err.response?.status || "Network Error"}): ${err.message}`);
+                }
+            } else {
+                setError(err instanceof Error ? err.message : "Failed to connect to backend server");
+            }
         } finally {
             setLoading(false);
         }

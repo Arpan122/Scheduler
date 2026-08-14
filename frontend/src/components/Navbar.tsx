@@ -1,18 +1,19 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { FiLogIn, FiLogOut } from "react-icons/fi";
 import { useAuth } from "../context/AuthContext";
 
 export function Navbar() {
     const { user } = useAuth();
-    const nav = useNavigate();
 
     function redir() {
-        window.location.href = "https://us-east-2zwqsbahy3.auth.us-east-2.amazoncognito.com/login?client_id=20k5o3nal6jitv8fb77l9s16lm&redirect_uri=http://localhost:3000/login&response_type=code&scope=email+openid+phone";
+        const redirectUri = `http://${import.meta.env.VITE_FRONTEND_URL}/login`;
+        window.location.href = `https://${import.meta.env.VITE_COGNITO_DOMAIN}/oauth2/authorize?response_type=code&client_id=${import.meta.env.VITE_COGNITO_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}`;
     }
 
     async function handleLogout() {
         try {
-            nav("/logout", {replace: true})
+            const logoutUri = `http://${import.meta.env.VITE_FRONTEND_URL}/logout`;
+            window.location.href = `https://${import.meta.env.VITE_COGNITO_DOMAIN}/logout?client_id=${import.meta.env.VITE_COGNITO_CLIENT_ID}&logout_uri=${encodeURIComponent(logoutUri)}`;
         } catch (err) {
             console.error('Logout failed:', err);
         }

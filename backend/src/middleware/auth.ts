@@ -3,8 +3,8 @@ import * as dotenv from "dotenv";
 
 dotenv.config({path: '../.env'})
 
-const uipd : string = process.env.COGNITO_USER_POOL_ID ? process.env.COGNITO_USER_POOL_ID : "";
-const cid : string = process.env.COGNITO_CLIENT_ID ? process.env.COGNITO_CLIENT_ID : "";
+const uipd : string = process.env.VITE_COGNITO_USER_POOL_ID ? process.env.VITE_COGNITO_USER_POOL_ID : "";
+const cid : string = process.env.VITE_COGNITO_CLIENT_ID ? process.env.VITE_COGNITO_CLIENT_ID : "";
 
 const verifier = CognitoJwtVerifier.create({
     userPoolId: uipd,

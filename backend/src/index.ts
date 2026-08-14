@@ -13,9 +13,9 @@ const app = express();
 const PORT = process.env.PORT ?? 8000;
 
 const idVerifier = CognitoJwtVerifier.create({
-    userPoolId: process.env.COGNITO_USER_POOL_ID ?? "",
+    userPoolId: process.env.VITE_COGNITO_USER_POOL_ID ?? "",
     tokenUse: "id",
-    clientId: process.env.COGNITO_CLIENT_ID ?? ""
+    clientId: process.env.VITE_COGNITO_CLIENT_ID ?? ""
 });
 
 app.use(cors({
@@ -65,22 +65,22 @@ app.post("/api/login", async (req, res) => {
 
     try {
         const authHeader = Buffer.from(
-            `${process.env.COGNITO_CLIENT_ID}:${process.env.COGNITO_CLIENT_SECRET}`
+            `${process.env.VITE_COGNITO_CLIENT_ID}:${process.env.COGNITO_CLIENT_SECRET}`
         ).toString('base64');
 
 
-        const cid :string = process.env.COGNITO_CLIENT_ID ? process.env.COGNITO_CLIENT_ID  : "";
+        const cid :string = process.env.VITE_COGNITO_CLIENT_ID ? process.env.VITE_COGNITO_CLIENT_ID  : "";
         const codeParam = typeof code === 'string' ? code : String(code || '');
 
         const params = new URLSearchParams({
             grant_type: 'authorization_code',
             client_id: cid,
             code: codeParam,
-            redirect_uri: "http://localhost:3000/login"
+            redirect_uri: `http://${process.env.VITE_FRONTEND_URL}/login`
         });
 
         const response = await axios.post(
-            `https://${process.env.COGNITO_DOMAIN}/oauth2/token`,
+            `https://${process.env.VITE_COGNITO_DOMAIN}/oauth2/token`,
             params.toString(),
             {
                 headers: {
