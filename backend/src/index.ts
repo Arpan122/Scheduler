@@ -72,11 +72,20 @@ app.post("/api/login", async (req, res) => {
         const cid :string = process.env.VITE_COGNITO_CLIENT_ID ? process.env.VITE_COGNITO_CLIENT_ID  : "";
         const codeParam = typeof code === 'string' ? code : String(code || '');
 
+        const getFrontendUrl = () => {
+            const raw = process.env.VITE_FRONTEND_URL || 'localhost:3000';
+            if (raw.startsWith('http://') || raw.startsWith('https://')) {
+                return raw.endsWith('/') ? raw.slice(0, -1) : raw;
+            }
+            const isProd = process.env.NODE_ENV === 'production';
+            return isProd ? `https://${raw}` : `http://${raw}`;
+        };
+
         const params = new URLSearchParams({
             grant_type: 'authorization_code',
             client_id: cid,
             code: codeParam,
-            redirect_uri: `http://${process.env.VITE_FRONTEND_URL}/login`
+            redirect_uri: `${getFrontendUrl()}/login`
         });
 
         const response = await axios.post(

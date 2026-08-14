@@ -5,14 +5,21 @@ import { useAuth } from "../context/AuthContext";
 export function Navbar() {
     const { user } = useAuth();
 
+    const getFrontendUrl = () => {
+        const envUrl = import.meta.env.VITE_FRONTEND_URL;
+        if (!envUrl) return window.location.origin;
+        if (envUrl.startsWith("http://") || envUrl.startsWith("https://")) return envUrl;
+        return `${window.location.protocol}//${envUrl}`;
+    };
+
     function redir() {
-        const redirectUri = `http://${import.meta.env.VITE_FRONTEND_URL}/login`;
+        const redirectUri = `${getFrontendUrl()}/login`;
         window.location.href = `https://${import.meta.env.VITE_COGNITO_DOMAIN}/oauth2/authorize?response_type=code&client_id=${import.meta.env.VITE_COGNITO_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}`;
     }
 
     async function handleLogout() {
         try {
-            const logoutUri = `http://${import.meta.env.VITE_FRONTEND_URL}/logout`;
+            const logoutUri = `${getFrontendUrl()}/logout`;
             window.location.href = `https://${import.meta.env.VITE_COGNITO_DOMAIN}/logout?client_id=${import.meta.env.VITE_COGNITO_CLIENT_ID}&logout_uri=${encodeURIComponent(logoutUri)}`;
         } catch (err) {
             console.error('Logout failed:', err);
