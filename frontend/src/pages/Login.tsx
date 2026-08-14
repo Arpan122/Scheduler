@@ -2,6 +2,7 @@ import axios from "axios";
 import { useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { getServerUrl } from "../utils/config";
 
 export function Login() {
     const { checkAuth, showToast } = useAuth();
@@ -19,7 +20,7 @@ export function Login() {
 
             try {
                 await axios.post(
-                    `http://${import.meta.env.VITE_SERVER_URL}/api/login`,
+                    `${getServerUrl()}/api/login`,
                     { code: code },
                     { withCredentials: true }
                 );

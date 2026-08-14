@@ -2,6 +2,7 @@ import axios from "axios";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { getServerUrl } from "../utils/config";
 
 export function Logout() {
     const { checkAuth, showToast } = useAuth();
@@ -11,7 +12,7 @@ export function Logout() {
         const doLogout = async () => {
             try {
                 await axios.post(
-                    `http://${import.meta.env.VITE_SERVER_URL}/api/logout`,
+                    `${getServerUrl()}/api/logout`,
                     {},
                     { withCredentials: true }
                 );

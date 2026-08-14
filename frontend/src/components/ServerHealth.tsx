@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
+import { getServerUrl } from "../utils/config";
 import {
     FiActivity,
     FiCpu,
@@ -48,9 +49,8 @@ export function ServerHealth() {
         setLoading(true);
         const start = performance.now();
         try {
-            const serverUrl = import.meta.env.VITE_SERVER_URL || "localhost:8000";
             const res = await axios.get<HealthMetrics>(
-                `http://${serverUrl}/api/health`,
+                `${getServerUrl()}/api/health`,
                 { withCredentials: true }
             );
             

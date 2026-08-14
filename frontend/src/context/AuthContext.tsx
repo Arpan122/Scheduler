@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import axios from "axios";
+import { getServerUrl } from "../utils/config";
 
 interface AuthContextType {
     user: any;
@@ -29,7 +30,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const checkAuth = async () => {
         try {
             const res = await axios.get(
-                `http://${import.meta.env.VITE_SERVER_URL}/api/validate`,
+                `${getServerUrl()}/api/validate`,
                 { withCredentials: true }
             );
             if (res.data.authenticated === true) {

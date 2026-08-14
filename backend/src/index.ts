@@ -18,8 +18,36 @@ const idVerifier = CognitoJwtVerifier.create({
     clientId: process.env.VITE_COGNITO_CLIENT_ID ?? ""
 });
 
+const getCorsOrigins = () => {
+    const defaultOrigins = [
+        "http://localhost:3000",
+        "https://scheduler.absites.xyz",
+        "https://us-east-2zwqsbahy3.auth.us-east-2.amazoncognito.com"
+    ];
+    const frontendEnv = process.env.VITE_FRONTEND_URL || process.env.FRONTEND_URL;
+    if (frontendEnv) {
+        if (frontendEnv.startsWith("http://") || frontendEnv.startsWith("https://")) {
+            const clean = frontendEnv.endsWith("/") ? frontendEnv.slice(0, -1) : frontendEnv;
+            if (!defaultOrigins.includes(clean)) defaultOrigins.push(clean);
+        } else {
+            const httpUrl = `http://${frontendEnv}`;
+            const httpsUrl = `https://${frontendEnv}`;
+            if (!defaultOrigins.includes(httpUrl)) defaultOrigins.push(httpUrl);
+            if (!defaultOrigins.includes(httpsUrl)) defaultOrigins.push(httpsUrl);
+        }
+    }
+    return defaultOrigins;
+};
+
 app.use(cors({
-    origin: ["http://localhost:3000", "https://scheduler.absites.xyz", "https://us-east-2zwqsbahy3.auth.us-east-2.amazoncognito.com"],
+    origin: (origin, callback) => {
+        const allowed = getCorsOrigins();
+        if (!origin || allowed.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error(`CORS blocked origin: ${origin}`));
+        }
+    },
     credentials: true
 }));
 app.use(cookieParser())
