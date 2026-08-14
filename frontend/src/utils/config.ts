@@ -1,5 +1,5 @@
 export const getServerUrl = (): string => {
-    const envUrl = import.meta.env.VITE_SERVER_URL || "localhost:8000";
+    const envUrl = import.meta.env.VITE_SERVER_URL;
     if (envUrl.startsWith("http://") || envUrl.startsWith("https://")) {
         return envUrl.endsWith("/") ? envUrl.slice(0, -1) : envUrl;
     }

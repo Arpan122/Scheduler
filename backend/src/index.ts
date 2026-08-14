@@ -54,6 +54,10 @@ app.use(cookieParser())
 app.use(express.json());
 
 
+app.get("/api/ping", (req, res) => {
+    res.json({ status: "ok" });
+});
+
 app.get("/api/health", authToken, (req, res) => {
 
     const memory = process.memoryUsage();
