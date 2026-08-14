@@ -19,7 +19,7 @@ const idVerifier = CognitoJwtVerifier.create({
 });
 
 app.use(cors({
-    origin: ["http://localhost:3000", "https://us-east-2zwqsbahy3.auth.us-east-2.amazoncognito.com"],
+    origin: ["http://localhost:3000", "https://scheduler.absites.xyz", "https://us-east-2zwqsbahy3.auth.us-east-2.amazoncognito.com"],
     credentials: true
 }));
 app.use(cookieParser())
