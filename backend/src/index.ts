@@ -77,8 +77,7 @@ app.post("/api/login", async (req, res) => {
             if (raw.startsWith('http://') || raw.startsWith('https://')) {
                 return raw.endsWith('/') ? raw.slice(0, -1) : raw;
             }
-            const isProd = process.env.NODE_ENV === 'production';
-            return isProd ? `https://${raw}` : `http://${raw}`;
+            return `http://${raw}`;
         };
 
         const params = new URLSearchParams({

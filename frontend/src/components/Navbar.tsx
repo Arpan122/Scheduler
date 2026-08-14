@@ -6,10 +6,11 @@ export function Navbar() {
     const { user } = useAuth();
 
     const getFrontendUrl = () => {
-        const envUrl = import.meta.env.VITE_FRONTEND_URL;
-        if (!envUrl) return window.location.origin;
-        if (envUrl.startsWith("http://") || envUrl.startsWith("https://")) return envUrl;
-        return `${window.location.protocol}//${envUrl}`;
+        const envUrl = import.meta.env.VITE_FRONTEND_URL || 'localhost:3000';
+        if (envUrl.startsWith('http://') || envUrl.startsWith('https://')) {
+            return envUrl.endsWith('/') ? envUrl.slice(0, -1) : envUrl;
+        }
+        return `http://${envUrl}`;
     };
 
     function redir() {
