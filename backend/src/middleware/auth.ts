@@ -6,8 +6,6 @@ dotenv.config({path: '../.env'})
 const uipd : string = process.env.COGNITO_USER_POOL_ID ? process.env.COGNITO_USER_POOL_ID : "";
 const cid : string = process.env.COGNITO_CLIENT_ID ? process.env.COGNITO_CLIENT_ID : "";
 
-console.log("This is the upid!!!!!:" + uipd);
-
 const verifier = CognitoJwtVerifier.create({
     userPoolId: uipd,
     tokenUse: "access",

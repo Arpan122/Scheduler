@@ -1,28 +1,18 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { FiLogIn, FiLogOut } from "react-icons/fi";
-import {  useEffect, useState } from "react";
-
-import axios from "axios";
+import { useAuth } from "../context/AuthContext";
 
 export function Navbar() {
-    const [user, setUser] = useState(null);
+    const { user } = useAuth();
+    const nav = useNavigate();
 
-    function redir () {
-        window.location.href = "https://us-east-2zwqsbahy3.auth.us-east-2.amazoncognito.com/login/continue?client_id=20k5o3nal6jitv8fb77l9s16lm&redirect_uri=http%3A%2F%2Flocalhost%3A8000%2Fapi%2Flogin&response_type=code&scope=email+openid+phone";
+    function redir() {
+        window.location.href = "https://us-east-2zwqsbahy3.auth.us-east-2.amazoncognito.com/login?client_id=20k5o3nal6jitv8fb77l9s16lm&redirect_uri=http://localhost:3000/login&response_type=code&scope=email+openid+phone";
     }
-
-    useEffect(() => {
-        axios.get(`http://${import.meta.env.VITE_SERVER_URL}:8000/api/validate`, {withCredentials: true}).then(
-            (res) => (res.data.authenticated===true ? setUser(res.data.user) : setUser(null))
-        ).catch(
-            () => setUser(null)
-        );
-    }, []);
 
     async function handleLogout() {
         try {
-            window.location.href = `http://${import.meta.env.VITE_SERVER_URL}:8000/api/logout`;
-            setUser(null);
+            nav("/logout", {replace: true})
         } catch (err) {
             console.error('Logout failed:', err);
         }

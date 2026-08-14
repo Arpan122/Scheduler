@@ -4,15 +4,22 @@ import os from "os";
 import { authToken } from './middleware/auth.js';
 import * as dotenv from "dotenv";
 import cookieParser from 'cookie-parser';
-import axios from "axios"
+import axios from "axios";
+import { CognitoJwtVerifier } from "aws-jwt-verify";
 
 dotenv.config({path: '../.env'})
 
 const app = express();
 const PORT = process.env.PORT ?? 8000;
 
+const idVerifier = CognitoJwtVerifier.create({
+    userPoolId: process.env.COGNITO_USER_POOL_ID ?? "",
+    tokenUse: "id",
+    clientId: process.env.COGNITO_CLIENT_ID ?? ""
+});
+
 app.use(cors({
-    origin: ["http://localhost:3000", "https://us-east-2zwqsbahy3.auth.us-east-2.amazoncognito.com/"],
+    origin: ["http://localhost:3000", "https://us-east-2zwqsbahy3.auth.us-east-2.amazoncognito.com"],
     credentials: true
 }));
 app.use(cookieParser())
@@ -49,8 +56,8 @@ app.get("/api/health", authToken, (req, res) => {
 });
 
 
-app.get("/api/login", async (req, res) => {
-    const { code } = req.query;
+app.post("/api/login", async (req, res) => {
+    const { code } = req.body;
 
     if (!code) {
         return res.status(400).send('Authorization code missing');
@@ -61,6 +68,7 @@ app.get("/api/login", async (req, res) => {
             `${process.env.COGNITO_CLIENT_ID}:${process.env.COGNITO_CLIENT_SECRET}`
         ).toString('base64');
 
+
         const cid :string = process.env.COGNITO_CLIENT_ID ? process.env.COGNITO_CLIENT_ID  : "";
         const codeParam = typeof code === 'string' ? code : String(code || '');
 
@@ -68,7 +76,7 @@ app.get("/api/login", async (req, res) => {
             grant_type: 'authorization_code',
             client_id: cid,
             code: codeParam,
-            redirect_uri: `http://${process.env.VITE_SERVER_URL}:8000/api/login`
+            redirect_uri: "http://localhost:3000/login"
         });
 
         const response = await axios.post(
@@ -87,7 +95,7 @@ app.get("/api/login", async (req, res) => {
         // Set tokens in HttpOnly cookies
         res.cookie('access_token', tokens.access_token, {
             httpOnly: true,
-            secure: true, // Set to true in production (HTTPS)
+            secure: false, // Set to true in production (HTTPS)
             sameSite: 'lax',
             maxAge: tokens.expires_in * 1000,
         });
@@ -96,34 +104,36 @@ app.get("/api/login", async (req, res) => {
             httpOnly: true,
             secure: false,
             sameSite: 'lax',
+            maxAge: tokens.expires_in * 1000,
         });
 
-        res.redirect("http://localhost:3000");
+        res.status(200).send("Authentication success");
     } catch(err) {
         console.error('OAuth Callback Error:', err);
         res.status(500).send('Authentication failed');
     }
 });
 
-app.get('/api/logout', (req, res) => {
+app.post('/api/logout', (req, res) => {
     res.clearCookie('access_token');
     res.clearCookie('id_token');
-    const logoutUrl = `https://us-east-2zwqsbahy3.auth.us-east-2.amazoncognito.com/logout?client_id=20k5o3nal6jitv8fb77l9s16lm&logout_uri=http://localhost:3000/`;
-    res.redirect(logoutUrl);
+    res.status(200).json({ success: true, message: "Logged out successfully" });
 });
 
-app.get("/api/validate", (req, res) => {
+app.get("/api/validate", async (req, res) => {
     const idToken = req.cookies.id_token;
+    
     if (!idToken) {
         return res.status(401).json({ authenticated: false });
     }
 
-    // Parse ID token payload (base64 decode)
-    const payload = JSON.parse(
-        Buffer.from(idToken.split('.')[1], 'base64').toString()
-    );
-
-    res.json({ authenticated: true, user: payload });
+    try {
+        const payload = await idVerifier.verify(idToken);
+        res.json({ authenticated: true, user: payload });
+    } catch (err) {
+        console.error("Token verification error:", err);
+        res.status(401).json({ authenticated: false });
+    }
 });
 
 app.listen(PORT, () => {
