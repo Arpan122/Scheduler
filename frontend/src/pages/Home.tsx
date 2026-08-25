@@ -11,6 +11,7 @@ export function Home() {
     const [uploadResponse, setUploadResponse] = useState<any>(null);
     const [uploadError, setUploadError] = useState<string | null>(null);
     const [showFormatErrorDialog, setShowFormatErrorDialog] = useState<boolean>(false);
+    const [actionMessage, setActionMessage] = useState<{type: 'success' | 'error', text: string} | null>(null);
 
     useEffect(() => {
         const checkServer = async () => {
@@ -68,6 +69,29 @@ export function Home() {
         }
     };
 
+    const handleAddEvent = async (ev: {title: string, days: Array<string> | string, start: string, end: string, location: string}) => {
+        // console.log("Add button clicked for event:", ev);
+        setActionMessage(null);
+        try {
+            const response = await axios.post(`${getServerUrl()}/api/addEvent`, ev, {
+                withCredentials: true
+            });
+            if (response.status === 200) {
+                // console.log("Server response:", response.data);
+                setActionMessage({ type: 'success', text: `Successfully added "${ev.title}" to your calendar!` });
+            }
+            else {
+                setActionMessage({ type: 'error', text: `Failed to add "${ev.title}" to your calendar.` });
+            }
+            
+            // clear after 3 seconds
+            setTimeout(() => setActionMessage(null), 3000);
+        } catch (err) {
+            console.error("Failed to add event:", err);
+            setActionMessage({ type: 'error', text: `Failed to add "${ev.title}". Check console for details.` });
+        }
+    };
+
     if (uploadResponse && uploadResponse.result) {
         try {
             var parsedEvents = uploadResponse.result;
@@ -105,6 +129,20 @@ export function Home() {
                 {uploadResponse && (
                     <div style={{ marginTop: "2rem" }}>
                         <h3 style={{ marginBottom: "1rem" }}>Extracted Schedule</h3>
+                        
+                        {actionMessage && (
+                            <div style={{ 
+                                padding: "1rem", 
+                                marginBottom: "1rem", 
+                                borderRadius: "6px",
+                                backgroundColor: actionMessage.type === 'success' ? "rgba(74, 222, 128, 0.1)" : "rgba(248, 113, 113, 0.1)",
+                                border: `1px solid ${actionMessage.type === 'success' ? '#4ade80' : '#f87171'}`,
+                                color: actionMessage.type === 'success' ? '#4ade80' : '#f87171'
+                            }}>
+                                {actionMessage.text}
+                            </div>
+                        )}
+
                         {parsedEvents.length ? (
                             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "1rem" }}>
                                 {parsedEvents.map((ev : {title: string, days: Array<string>, start: string, end: string, location: string}, idx : number) => (
@@ -116,7 +154,7 @@ export function Home() {
                                             <p style={{ margin: "0.25rem 0" }}><strong>Location:</strong> {ev.location}</p>
                                         </div>
                                         <div style={{ marginTop: "1rem", display: "flex", justifyContent: "center", gap: "0.5rem" }}>
-                                            <button className="card-action-btn" aria-label="Add">
+                                            <button className="card-action-btn" aria-label="Add" onClick={() => handleAddEvent(ev)}>
                                                 <span className="btn-icon"><FaPlus /></span>
                                                 <span className="btn-text">Add</span>
                                             </button>

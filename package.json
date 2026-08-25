@@ -16,6 +16,7 @@
     "concurrently": "^9.1.2"
   },
   "dependencies": {
+    "@aws-sdk/client-cognito-identity-provider": "^3.1117.0",
     "@google/genai": "^2.18.0",
     "@types/cookie-parser": "^1.4.10",
     "aws-cdk": "^2.1136.0",
@@ -24,6 +25,7 @@
     "cookie-parser": "^1.4.7",
     "dotenv": "^17.4.2",
     "express-session": "^1.19.0",
+    "googleapis": "^176.0.0",
     "multer": "^2.2.0",
     "openid-client": "^6.8.5",
     "react-cookie": "^8.1.2",

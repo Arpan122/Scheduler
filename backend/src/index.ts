@@ -8,6 +8,8 @@ import axios from "axios";
 import { CognitoJwtVerifier } from "aws-jwt-verify";
 import { GoogleGenAI, Schema, ThinkingLevel, Type } from "@google/genai";
 import multer from "multer";
+import { google } from "googleapis";
+import { CognitoIdentityProviderClient, GetUserCommand } from "@aws-sdk/client-cognito-identity-provider";
 
 dotenv.config({path: '../.env'})
 
@@ -119,7 +121,7 @@ app.post("/api/login", async (req, res) => {
         ).toString('base64');
 
 
-        const cid :string = process.env.VITE_COGNITO_CLIENT_ID ? process.env.VITE_COGNITO_CLIENT_ID  : "";
+        const cid : string = process.env.VITE_COGNITO_CLIENT_ID ? process.env.VITE_COGNITO_CLIENT_ID  : "";
         const codeParam = typeof code === 'string' ? code : String(code || '');
 
         const getFrontendUrl = () => {
@@ -150,6 +152,23 @@ app.post("/api/login", async (req, res) => {
 
         const tokens = response.data;
 
+        let googleAccessToken = null;
+        if (tokens.access_token) {
+            try {
+                const cognitoClient = new CognitoIdentityProviderClient({ region: process.env.AWS_REGION || "us-east-2" });
+                const command = new GetUserCommand({
+                    AccessToken: tokens.access_token
+                });
+                const userInfo = await cognitoClient.send(command);
+                const googleTokenAttr = userInfo.UserAttributes?.find(attr => attr.Name === "custom:access_token");
+                if (googleTokenAttr) {
+                    googleAccessToken = googleTokenAttr.Value;
+                }
+            } catch (error) {
+                console.error("Error fetching user attributes from Cognito:", error);
+            }
+        }
+
         // Set tokens in HttpOnly cookies
         res.cookie('access_token', tokens.access_token, {
             httpOnly: true,
@@ -165,9 +184,17 @@ app.post("/api/login", async (req, res) => {
             maxAge: tokens.expires_in * 1000,
         });
 
+        if (googleAccessToken) {
+            res.cookie('google_access_token', googleAccessToken, {
+                httpOnly: true,
+                secure: false,
+                sameSite: 'lax',
+                maxAge: tokens.expires_in * 1000,
+            });
+        }
+
         res.status(200).send("Authentication success");
     } catch(err) {
-        console.error('OAuth Callback Error:', err);
         res.status(500).send('Authentication failed');
     }
 });
@@ -175,6 +202,7 @@ app.post("/api/login", async (req, res) => {
 app.post('/api/logout', (req, res) => {
     res.clearCookie('access_token');
     res.clearCookie('id_token');
+    res.clearCookie('google_access_token');
     res.status(200).json({ success: true, message: "Logged out successfully" });
 });
 
@@ -187,7 +215,8 @@ app.get("/api/validate", async (req, res) => {
 
     try {
         const payload = await idVerifier.verify(idToken);
-        res.json({ authenticated: true, user: payload });
+        const hasGoogleToken = !!payload['custom:access_token'] || !!req.cookies.google_access_token;
+        res.json({ authenticated: true, user: payload, hasGoogleToken });
     } catch (err) {
         console.error("Token verification error:", err);
         res.status(401).json({ authenticated: false });
@@ -271,6 +300,35 @@ app.post("/api/upload", upload.single("image"), async (req, res) => {
             details: err.message
         });
     }
+});
+
+app.post("/api/addEvent", (req, res) => {
+    try {
+        const eventData = req.body;
+        const googleAccessToken = req.cookies.google_access_token;
+
+        if (!googleAccessToken) {
+            return res.status(403).json({ error: "No Google access token found. Did you log in with Google?" });
+        }
+
+        const googleOauth2Client = new google.auth.OAuth2();
+        googleOauth2Client.setCredentials({
+            access_token: googleAccessToken,
+        });
+
+        const calendarAPI = google.calendar({version: "v3", auth: googleOauth2Client});
+        //TODO: Parse event data and it it to calendar
+
+        res.status(200).json({ success: true });
+    } catch (err) {
+        console.error("Calendar add event error: ", err);
+        res.status(500).json({ error: "Failed to add event" });
+    }
+});
+
+app.post("/api/deleteEvent", (req, res) => {
+    // Empty for now
+    res.status(200).json({ success: true });
 });
 
 app.listen(PORT, () => {

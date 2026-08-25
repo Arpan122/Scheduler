@@ -15,7 +15,8 @@ export function Navbar() {
 
     function redir() {
         const redirectUri = `${getFrontendUrl()}/login`;
-        window.location.href = `https://${import.meta.env.VITE_COGNITO_DOMAIN}/oauth2/authorize?response_type=code&client_id=${import.meta.env.VITE_COGNITO_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}`;
+        const scopes = encodeURIComponent("openid email phone aws.cognito.signin.user.admin");
+        window.location.href = `https://${import.meta.env.VITE_COGNITO_DOMAIN}/oauth2/authorize?response_type=code&client_id=${import.meta.env.VITE_COGNITO_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scopes}`;
     }
 
     async function handleLogout() {
