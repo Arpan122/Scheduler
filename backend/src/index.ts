@@ -6,11 +6,29 @@ import * as dotenv from "dotenv";
 import cookieParser from 'cookie-parser';
 import axios from "axios";
 import { CognitoJwtVerifier } from "aws-jwt-verify";
+import { GoogleGenAI, Schema, ThinkingLevel, Type } from "@google/genai";
+import multer from "multer";
 
 dotenv.config({path: '../.env'})
 
 const app = express();
 const PORT = process.env.PORT ?? 8000;
+
+// Configure Multer for in-memory file uploads
+const storage = multer.memoryStorage();
+const upload = multer({ storage });
+
+// Initialize Gemini API
+const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY ?? "" });
+
+function fileToGenerativePart(buffer: Buffer, mimeType: string) {
+    return {
+        inlineData: {
+            data: buffer.toString("base64"),
+            mimeType
+        },
+    };
+}
 
 const idVerifier = CognitoJwtVerifier.create({
     userPoolId: process.env.VITE_COGNITO_USER_POOL_ID ?? "",
@@ -50,9 +68,9 @@ app.use(cors({
     },
     credentials: true
 }));
-app.use(cookieParser())
+app.use(cookieParser());
 app.use(express.json());
-
+app.use(express.urlencoded({ extended: true }));
 
 app.get("/api/ping", (req, res) => {
     res.json({ status: "ok" });
@@ -173,6 +191,85 @@ app.get("/api/validate", async (req, res) => {
     } catch (err) {
         console.error("Token verification error:", err);
         res.status(401).json({ authenticated: false });
+    }
+});
+
+app.post("/api/upload", upload.single("image"), async (req, res) => {
+    try {
+        const file = req.file;
+
+        if (!file || !file.buffer || file.buffer.length === 0) {
+            return res.status(400).json({ error: "No image file provided in request. Expected multipart form-data field 'image'." });
+        }
+
+        if (!file.mimetype.startsWith("image/")) {
+            return res.status(400).json({ error: "Invalid file format. Please upload an image file." });
+        }
+
+        const resSchema : Schema = {
+            type: Type.ARRAY,
+            description: "List of scheduled events",
+            items: {
+                type: Type.OBJECT,
+                properties: {
+                    title: {
+                        type: Type.STRING,
+                        description: "Name of the event"
+                    },
+                    days: {
+                        type: Type.ARRAY,
+                        items: {
+                            type: Type.STRING
+                        },
+                        description: "The days the event happens"
+                    },
+                    start: {
+                        type: Type.STRING,
+                        description: "Start time of the event"
+                    },
+                    end: {
+                        type: Type.STRING,
+                        description: "End time of the event"
+                    },
+                    location: {
+                        type: Type.STRING,
+                        description: "Location of the event"
+                    }
+                },
+                required: ["title", "days", "start", "end", "location"]
+            }
+        };
+
+        const prompt = "I have given you a picture of a schedule. I want you to extract the details from it and return a structured output as given. Have no repeating course titles. Make sure to remove the 'Room: ' part of the locations. Always extract the end time if possible.";
+
+        const imagePart = fileToGenerativePart(file.buffer, file.mimetype || "image/png");
+
+        const response = await genAI.models.generateContent({
+            model: "gemini-3.6-flash",
+            contents: [prompt, imagePart],
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: resSchema,
+                thinkingConfig: {
+                    thinkingLevel: ThinkingLevel.LOW
+                }
+            }
+        });
+
+        const text : string = response.text ? response.text : "No response";
+        const toSend = JSON.parse(text);
+
+        return res.status(200).json({
+            success: true,
+            result: toSend
+        });
+
+    } catch (err: any) {
+        console.error("Gemini API error during image processing:", err);
+        return res.status(500).json({
+            error: "Failed to process image with Gemini API",
+            details: err.message
+        });
     }
 });
 
