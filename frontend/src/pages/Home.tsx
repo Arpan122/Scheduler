@@ -92,6 +92,12 @@ export function Home() {
         }
     };
 
+    const handleRemoveEvent = (idxToRemove: number) => {
+        if (!uploadResponse || !uploadResponse.result) return;
+        const newResult = uploadResponse.result.filter((_: any, idx: number) => idx !== idxToRemove);
+        setUploadResponse({ ...uploadResponse, result: newResult });
+    };
+
     if (uploadResponse && uploadResponse.result) {
         try {
             var parsedEvents = uploadResponse.result;
@@ -162,7 +168,7 @@ export function Home() {
                                                 <span className="btn-icon"><FaEdit /></span>
                                                 <span className="btn-text">Edit</span>
                                             </button>
-                                            <button className="card-action-btn btn-remove" aria-label="Remove">
+                                            <button className="card-action-btn btn-remove" aria-label="Remove" onClick={() => handleRemoveEvent(idx)}>
                                                 <span className="btn-icon"><FaTrash /></span>
                                                 <span className="btn-text">Remove</span>
                                             </button>
@@ -227,7 +233,7 @@ export function Home() {
                     }}>
                         <h3 style={{ color: "var(--text)", marginTop: 0 }}>Processing Image</h3>
                         <p style={{ color: "var(--text)" }}>
-                            The AI is currently processing your schedule. This may take a few moments...
+                            The schedule image is currently being processed. This may take a few moments...
                         </p>
                         <div style={{ marginTop: "1.5rem", display: "flex", justifyContent: "center" }}>
                             <div style={{

@@ -274,7 +274,7 @@ app.post("/api/upload", upload.single("image"), async (req, res) => {
         const imagePart = fileToGenerativePart(file.buffer, file.mimetype || "image/png");
 
         const response = await genAI.models.generateContent({
-            model: "gemini-3.6-flash",
+            model: "gemini-3.7-flash",
             contents: [prompt, imagePart],
             config: {
                 responseMimeType: "application/json",
@@ -302,7 +302,7 @@ app.post("/api/upload", upload.single("image"), async (req, res) => {
     }
 });
 
-app.post("/api/addEvent", (req, res) => {
+app.post("/api/addEvent", async (req, res) => {
     try {
         const eventData = req.body;
         const googleAccessToken = req.cookies.google_access_token;
@@ -317,18 +317,86 @@ app.post("/api/addEvent", (req, res) => {
         });
 
         const calendarAPI = google.calendar({version: "v3", auth: googleOauth2Client});
-        //TODO: Parse event data and it it to calendar
+        // 1. Get user's primary calendar timezone (wrap in try-catch in case they only have calendar.events scope)
+        let timeZone = 'America/New_York';
+        try {
+            const calendar = await calendarAPI.calendars.get({ calendarId: 'primary' });
+            if (calendar.data.timeZone) {
+                timeZone = calendar.data.timeZone;
+            }
+        } catch (tzError) {
+            console.warn("Could not fetch calendar timezone (might be missing calendar.readonly scope). Defaulting to America/New_York.");
+        }
 
-        res.status(200).json({ success: true });
-    } catch (err) {
+        // 2. Parse time (e.g. "9:00 AM" or "14:30")
+        const parseTime = (timeStr: string) => {
+            if (!timeStr) return { hours: 9, minutes: 0 };
+            const match = timeStr.match(/(\d+):(\d+)\s*(AM|PM|am|pm)?/);
+            if (!match) return { hours: 9, minutes: 0 };
+            let hours = parseInt(match[1]);
+            const minutes = parseInt(match[2]);
+            const period = match[3]?.toUpperCase();
+            if (period === 'PM' && hours < 12) hours += 12;
+            if (period === 'AM' && hours === 12) hours = 0;
+            return { hours, minutes };
+        };
+
+        const startTime = parseTime(eventData.start);
+        const endTime = parseTime(eventData.end);
+
+        // 3. Map days to RRULE BYDAY format
+        const dayMap: Record<string, string> = {
+            "monday": "MO", "mon": "MO", "m": "MO",
+            "tuesday": "TU", "tue": "TU", "t": "TU", "tu": "TU",
+            "wednesday": "WE", "wed": "WE", "w": "WE",
+            "thursday": "TH", "thu": "TH", "r": "TH", "th": "TH",
+            "friday": "FR", "fri": "FR", "f": "FR",
+            "saturday": "SA", "sat": "SA", "s": "SA",
+            "sunday": "SU", "sun": "SU"
+        };
+
+        let daysArray = Array.isArray(eventData.days) ? eventData.days : [eventData.days];
+        let byDay = daysArray.map((d: string) => d ? dayMap[d.toLowerCase()] : null).filter(Boolean);
+
+        // 4. Create date strings using current date
+        const now = new Date();
+        const pad = (n: number) => n.toString().padStart(2, '0');
+        const yyyy = now.getFullYear();
+        const mm = pad(now.getMonth() + 1);
+        const dd = pad(now.getDate());
+        
+        const startDateTimeStr = `${yyyy}-${mm}-${dd}T${pad(startTime.hours)}:${pad(startTime.minutes)}:00`;
+        const endDateTimeStr = `${yyyy}-${mm}-${dd}T${pad(endTime.hours)}:${pad(endTime.minutes)}:00`;
+
+        // 5. Construct event object
+        const event: any = {
+            summary: eventData.title,
+            location: eventData.location,
+            start: {
+                dateTime: startDateTimeStr,
+                timeZone: timeZone,
+            },
+            end: {
+                dateTime: endDateTimeStr,
+                timeZone: timeZone,
+            },
+        };
+
+        if (byDay.length > 0) {
+            event.recurrence = [`RRULE:FREQ=WEEKLY;BYDAY=${byDay.join(',')}`];
+        }
+
+        // 6. Insert event into primary calendar
+        const response = await calendarAPI.events.insert({
+            calendarId: 'primary',
+            requestBody: event,
+        });
+
+        res.status(200).json({ success: true, event: response.data });
+    } catch (err: any) {
         console.error("Calendar add event error: ", err);
-        res.status(500).json({ error: "Failed to add event" });
+        res.status(500).json({ error: "Failed to add event", details: err.message });
     }
-});
-
-app.post("/api/deleteEvent", (req, res) => {
-    // Empty for now
-    res.status(200).json({ success: true });
 });
 
 app.listen(PORT, () => {
