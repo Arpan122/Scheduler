@@ -12,9 +12,6 @@ import {
     FiServer,
     FiPause,
     FiPlay,
-    FiUsers,
-    FiTrendingUp,
-    FiAlertTriangle,
 } from "react-icons/fi";
 
 export interface HealthMetrics {
@@ -37,15 +34,6 @@ export interface HealthMetrics {
         totalmemMB: string;
         cpus: number;
         loadavg: number[];
-        cpuUsagePercent: string;
-    };
-    metrics: {
-        totalRequests: number;
-        errorRequests: number;
-        errorRatePercent: string;
-        bytesReceived: number;
-        bytesSent: number;
-        activeUsers: number;
     };
 }
 
@@ -118,14 +106,7 @@ export function ServerHealth() {
     const totalMem = metrics ? parseFloat(metrics.system.totalmemMB) : 1;
     const freeMem = metrics ? parseFloat(metrics.system.freememMB) : 0;
     const usedMem = totalMem - freeMem;
-
-    const formatBytes = (bytes: number) => {
-        if (bytes === 0) return '0 B';
-        const k = 1024;
-        const sizes = ['B', 'KB', 'MB', 'GB'];
-        const i = Math.floor(Math.log(bytes) / Math.log(k));
-        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-    };
+    const sysMemPercent = Math.min(Math.round((usedMem / totalMem) * 100), 100);
 
     return (
         <section className="health-section">
@@ -240,86 +221,27 @@ export function ServerHealth() {
                         </div>
                     </div>
 
-                    {/* Card 4: System Info & CPU */}
+                    {/* Card 4: System Info */}
                     <div className="metric-card">
                         <div className="card-top">
-                            <span className="card-tag">SYSTEM CPU</span>
+                            <span className="card-tag">SYSTEM</span>
                             <FiCpu className="metric-type-icon" />
                         </div>
                         <div className="metric-body">
-                            <span className="metric-label">CPU Usage</span>
+                            <span className="metric-label">Host OS & Memory</span>
                             <div className="metric-value">
-                                {metrics.system.cpuUsagePercent}%
+                                {metrics.system.platform} {metrics.system.arch}
                                 <span className="sub-value">{metrics.system.cpus} Cores</span>
                             </div>
                             <div className="progress-bar-bg">
                                 <div
                                     className="progress-bar-fill sys"
-                                    style={{ width: `${Math.min(parseFloat(metrics.system.cpuUsagePercent), 100)}%` }}
+                                    style={{ width: `${sysMemPercent}%` }}
                                 />
                             </div>
                         </div>
                         <div className="card-footer">
-                            <span>Sys RAM: {(usedMem / 1024).toFixed(1)} / {(totalMem / 1024).toFixed(1)} GB used</span>
-                        </div>
-                    </div>
-
-                    {/* Card 5: Network Traffic */}
-                    <div className="metric-card">
-                        <div className="card-top">
-                            <span className="card-tag">NETWORK</span>
-                            <FiTrendingUp className="metric-type-icon" />
-                        </div>
-                        <div className="metric-body">
-                            <span className="metric-label">Total Traffic</span>
-                            <div className="metric-value">
-                                {formatBytes(metrics.metrics.bytesSent + metrics.metrics.bytesReceived)}
-                            </div>
-                        </div>
-                        <div className="card-footer">
-                            <span>Tx: {formatBytes(metrics.metrics.bytesSent)} • Rx: {formatBytes(metrics.metrics.bytesReceived)}</span>
-                        </div>
-                    </div>
-
-                    {/* Card 6: Error Rates */}
-                    <div className="metric-card">
-                        <div className="card-top">
-                            <span className="card-tag">ERRORS</span>
-                            <FiAlertTriangle className="metric-type-icon" />
-                        </div>
-                        <div className="metric-body">
-                            <span className="metric-label">Error Rate</span>
-                            <div className="metric-value">
-                                {metrics.metrics.errorRatePercent}%
-                                <span className="sub-value">({metrics.metrics.errorRequests} errs)</span>
-                            </div>
-                            <div className="progress-bar-bg">
-                                <div
-                                    className="progress-bar-fill"
-                                    style={{ width: `${Math.min(parseFloat(metrics.metrics.errorRatePercent), 100)}%`, backgroundColor: parseFloat(metrics.metrics.errorRatePercent) > 5 ? '#f87171' : '#4ade80' }}
-                                />
-                            </div>
-                        </div>
-                        <div className="card-footer">
-                            <span>Total Requests: {metrics.metrics.totalRequests}</span>
-                        </div>
-                    </div>
-
-                    {/* Card 7: Active Users */}
-                    <div className="metric-card">
-                        <div className="card-top">
-                            <span className="card-tag">USERS</span>
-                            <FiUsers className="metric-type-icon" />
-                        </div>
-                        <div className="metric-body">
-                            <span className="metric-label">Active Users</span>
-                            <div className="metric-value">
-                                {metrics.metrics.activeUsers}
-                                <span className="sub-value">in last 5m</span>
-                            </div>
-                        </div>
-                        <div className="card-footer">
-                            <span>Unique sessions tracking</span>
+                            <span>Sys RAM: {(usedMem / 1024).toFixed(1)} GB / {(totalMem / 1024).toFixed(1)} GB used</span>
                         </div>
                     </div>
                 </div>
