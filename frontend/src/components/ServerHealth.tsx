@@ -118,7 +118,6 @@ export function ServerHealth() {
     const totalMem = metrics ? parseFloat(metrics.system.totalmemMB) : 1;
     const freeMem = metrics ? parseFloat(metrics.system.freememMB) : 0;
     const usedMem = totalMem - freeMem;
-    const sysMemPercent = Math.min(Math.round((usedMem / totalMem) * 100), 100);
 
     const formatBytes = (bytes: number) => {
         if (bytes === 0) return '0 B';
