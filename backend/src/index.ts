@@ -74,6 +74,50 @@ app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Metrics state
+const metrics = {
+    totalRequests: 0,
+    errorRequests: 0,
+    bytesReceived: 0,
+    bytesSent: 0,
+    activeUsers: new Map<string, number>()
+};
+
+// Clean up inactive users every minute
+setInterval(() => {
+    const now = Date.now();
+    for (const [user, lastSeen] of metrics.activeUsers.entries()) {
+        if (now - lastSeen > 5 * 60 * 1000) { // 5 minutes inactivity
+            metrics.activeUsers.delete(user);
+        }
+    }
+}, 60000);
+
+app.use((req, res, next) => {
+    metrics.totalRequests++;
+    
+    if (req.headers['content-length']) {
+        metrics.bytesReceived += parseInt(req.headers['content-length'], 10) || 0;
+    }
+    
+    const userId = req.cookies?.id_token ? 'auth_' + req.cookies.id_token.substring(0, 15) : req.ip;
+    if (userId) {
+        metrics.activeUsers.set(userId, Date.now());
+    }
+
+    res.on('finish', () => {
+        if (res.statusCode >= 400) {
+            metrics.errorRequests++;
+        }
+        const contentLength = res.get('Content-Length');
+        if (contentLength) {
+            metrics.bytesSent += parseInt(contentLength, 10) || 0;
+        }
+    });
+
+    next();
+});
+
 app.get("/api/ping", (req, res) => {
     res.json({ status: "ok" });
 });
@@ -82,6 +126,8 @@ app.get("/api/health", authToken, (req, res) => {
 
     const memory = process.memoryUsage();
     const uptimeSeconds = Math.floor(process.uptime());
+    const errorRate = metrics.totalRequests === 0 ? 0 : (metrics.errorRequests / metrics.totalRequests);
+    const cpuUsage = os.loadavg()[0] / os.cpus().length;
 
     res.json({
         status: "ok",
@@ -103,7 +149,16 @@ app.get("/api/health", authToken, (req, res) => {
             totalmemMB: (os.totalmem() / (1024 * 1024)).toFixed(2),
             cpus: os.cpus().length,
             loadavg: os.loadavg(),
+            cpuUsagePercent: (cpuUsage * 100).toFixed(2)
         },
+        metrics: {
+            totalRequests: metrics.totalRequests,
+            errorRequests: metrics.errorRequests,
+            errorRatePercent: (errorRate * 100).toFixed(2),
+            bytesReceived: metrics.bytesReceived,
+            bytesSent: metrics.bytesSent,
+            activeUsers: metrics.activeUsers.size
+        }
     });
 });
 
@@ -274,7 +329,7 @@ app.post("/api/upload", upload.single("image"), async (req, res) => {
         const imagePart = fileToGenerativePart(file.buffer, file.mimetype || "image/png");
 
         const response = await genAI.models.generateContent({
-            model: "gemini-3.7-flash",
+            model: "gemini-3.5-flash-lite",
             contents: [prompt, imagePart],
             config: {
                 responseMimeType: "application/json",
@@ -358,12 +413,27 @@ app.post("/api/addEvent", async (req, res) => {
         let daysArray = Array.isArray(eventData.days) ? eventData.days : [eventData.days];
         let byDay = daysArray.map((d: string) => d ? dayMap[d.toLowerCase()] : null).filter(Boolean);
 
-        // 4. Create date strings using current date
-        const now = new Date();
+        // 4. Create date strings using the next valid date for the event
+        const targetDate = new Date();
+        
+        if (byDay.length > 0) {
+            const dayToNum: Record<string, number> = { "SU": 0, "MO": 1, "TU": 2, "WE": 3, "TH": 4, "FR": 5, "SA": 6 };
+            const todayNum = targetDate.getDay();
+            
+            let daysToAdd = 7;
+            for (const dayStr of byDay as string[]) {
+                const targetDay = dayToNum[dayStr];
+                let diff = targetDay - todayNum;
+                if (diff < 0) diff += 7;
+                if (diff < daysToAdd) daysToAdd = diff;
+            }
+            targetDate.setDate(targetDate.getDate() + daysToAdd);
+        }
+
         const pad = (n: number) => n.toString().padStart(2, '0');
-        const yyyy = now.getFullYear();
-        const mm = pad(now.getMonth() + 1);
-        const dd = pad(now.getDate());
+        const yyyy = targetDate.getFullYear();
+        const mm = pad(targetDate.getMonth() + 1);
+        const dd = pad(targetDate.getDate());
         
         const startDateTimeStr = `${yyyy}-${mm}-${dd}T${pad(startTime.hours)}:${pad(startTime.minutes)}:00`;
         const endDateTimeStr = `${yyyy}-${mm}-${dd}T${pad(endTime.hours)}:${pad(endTime.minutes)}:00`;

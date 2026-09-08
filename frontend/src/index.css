@@ -457,3 +457,49 @@ body {
   opacity: 1;
   margin-left: 0.4rem;
 }
+
+.btn-bulk-add, .btn-bulk-delete {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease, transform 0.1s ease;
+  border: 1px solid transparent;
+}
+
+.btn-bulk-add {
+  color: #38bdf8;
+  background-color: rgba(56, 189, 248, 0.1);
+  border-color: rgba(56, 189, 248, 0.4);
+}
+
+.btn-bulk-add:hover {
+  background-color: rgba(56, 189, 248, 0.2);
+  border-color: #38bdf8;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(56, 189, 248, 0.2);
+}
+
+.btn-bulk-add:active {
+  transform: scale(0.96) translateY(0);
+  box-shadow: none;
+}
+
+.btn-bulk-delete {
+  color: white;
+  background-color: #f87171;
+}
+
+.btn-bulk-delete:hover {
+  background-color: #ef4444;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(248, 113, 113, 0.3);
+}
+
+.btn-bulk-delete:active {
+  transform: scale(0.96) translateY(0);
+  box-shadow: none;
+}
