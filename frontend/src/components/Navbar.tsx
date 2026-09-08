@@ -6,7 +6,7 @@ export function Navbar() {
     const { user } = useAuth();
 
     const getFrontendUrl = () => {
-        const envUrl = import.meta.env.VITE_FRONTEND_URL || 'localhost:3000';
+        const envUrl = import.meta.env.VITE_FRONTEND_URL;
         if (envUrl.startsWith('http://') || envUrl.startsWith('https://')) {
             return envUrl.endsWith('/') ? envUrl.slice(0, -1) : envUrl;
         }
