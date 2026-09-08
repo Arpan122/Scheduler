@@ -14,9 +14,7 @@ import { CognitoIdentityProviderClient, GetUserCommand } from "@aws-sdk/client-c
 dotenv.config({path: '../.env'})
 
 const app = express();
-const PORT = process.env.PORT ?? 8000;
-
-//To redo commit 
+const PORT = process.env.PORT ?? 8000; 
 
 // Configure Multer for in-memory file uploads
 const storage = multer.memoryStorage();
