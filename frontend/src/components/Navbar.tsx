@@ -13,6 +13,8 @@ export function Navbar() {
         return `http://${envUrl}`;
     };
 
+    console.log(getFrontendUrl());
+
     function redir() {
         const redirectUri = `${getFrontendUrl()}/login`;
         const scopes = encodeURIComponent("openid email phone aws.cognito.signin.user.admin");
