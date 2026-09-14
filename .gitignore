@@ -5,3 +5,4 @@ testimg.png
 .env.local
 *.log
 .DS_Store
+testimg.png
