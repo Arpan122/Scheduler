@@ -238,7 +238,7 @@ app.post("/api/upload", upload.single("image"), async (req, res) => {
         const prompt = "I have given you a picture of a schedule. I want you to extract the details from it and return a structured output as given. Have no repeating course titles. Make sure to remove the 'Room: ' part of the locations. Always extract the end time if possible.";
         const imagePart = fileToGenerativePart(file.buffer, file.mimetype || "image/png");
         const response = await genAI.models.generateContent({
-            model: "gemini-3.7-flash",
+            model: "gemini-3.5-flash-lite",
             contents: [prompt, imagePart],
             config: {
                 responseMimeType: "application/json",
