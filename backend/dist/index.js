@@ -316,12 +316,35 @@ app.post("/api/addEvent", async (req, res) => {
         };
         let daysArray = Array.isArray(eventData.days) ? eventData.days : [eventData.days];
         let byDay = daysArray.map((d) => d ? dayMap[d.toLowerCase()] : null).filter(Boolean);
-        // 4. Create date strings using current date
+        // 4. Determine the starting date using the next available day
         const now = new Date();
+        let daysToAdd = 0;
+        if (byDay.length > 0) {
+            const dayMapToNum = {
+                "SU": 0, "MO": 1, "TU": 2, "WE": 3, "TH": 4, "FR": 5, "SA": 6
+            };
+            const currentDayNum = now.getDay();
+            let minOffset = 7;
+            for (const d of byDay) {
+                const targetDayNum = dayMapToNum[d];
+                let offset = targetDayNum - currentDayNum;
+                if (offset < 0) {
+                    offset += 7;
+                }
+                if (offset < minOffset) {
+                    minOffset = offset;
+                }
+            }
+            if (minOffset !== 7) {
+                daysToAdd = minOffset;
+            }
+        }
+        const startDate = new Date(now);
+        startDate.setDate(startDate.getDate() + daysToAdd);
         const pad = (n) => n.toString().padStart(2, '0');
-        const yyyy = now.getFullYear();
-        const mm = pad(now.getMonth() + 1);
-        const dd = pad(now.getDate());
+        const yyyy = startDate.getFullYear();
+        const mm = pad(startDate.getMonth() + 1);
+        const dd = pad(startDate.getDate());
         const startDateTimeStr = `${yyyy}-${mm}-${dd}T${pad(startTime.hours)}:${pad(startTime.minutes)}:00`;
         const endDateTimeStr = `${yyyy}-${mm}-${dd}T${pad(endTime.hours)}:${pad(endTime.minutes)}:00`;
         // 5. Construct event object
