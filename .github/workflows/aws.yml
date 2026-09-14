@@ -23,10 +23,11 @@ jobs:
             git reset --hard origin/main
 
             echo "Installing Dependencies"
-            sudo npm i
+            npm i
+            npm install-scripts approve --all
 
             echo "Building application"
-            sudo npm run build
+            npm run build
 
             echo "Restarting Backend Server"
             pm2 restart backend-server
